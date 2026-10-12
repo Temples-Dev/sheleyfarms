@@ -25,3 +25,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+# python / django
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+db.sqlite3
+.pytest_cache/
+.coverage
