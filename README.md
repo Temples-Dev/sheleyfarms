@@ -3,7 +3,7 @@
 Marketing and platform website for SheleyFarms, an agricultural investment platform connecting capital with local farming. Browse farms, investment options, and company information; includes patron, farmer, and admin dashboards.
 
 **Status:** Maintained client project, open source under MIT.
-**Frontend:** Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS 4.
+**Frontend:** Vite + React 19 + React Router, TypeScript, Tailwind CSS 4.
 **Backend:** Django + Django REST Framework, PostgreSQL, Redis + Celery (new; the web UI still runs on mock data until the API integration lands).
 
 ## Routes
