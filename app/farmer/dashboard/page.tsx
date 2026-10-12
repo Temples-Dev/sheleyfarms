@@ -25,14 +25,15 @@ import {
 export default function FarmerDashboard() {
   const { farmer } = useFarmerAuth()
   const searchParams = useSearchParams()
-  const [showSuccessMessage, setShowSuccessMessage] = useState(false)
+  const submitted = searchParams.get("submitted") === "true"
+  const [dismissed, setDismissed] = useState(false)
+  const showSuccessMessage = submitted && !dismissed
 
   useEffect(() => {
-    if (searchParams.get("submitted") === "true") {
-      setShowSuccessMessage(true)
-      setTimeout(() => setShowSuccessMessage(false), 5000)
-    }
-  }, [searchParams])
+    if (!submitted) return
+    const timer = setTimeout(() => setDismissed(true), 5000)
+    return () => clearTimeout(timer)
+  }, [submitted])
 
   // Mock data - in real app, this would come from API
   const stats = {
@@ -145,7 +146,7 @@ export default function FarmerDashboard() {
                 <div>
                   <h3 className="text-sm font-medium text-green-800">Application Submitted Successfully!</h3>
                   <p className="text-sm text-green-700 mt-1">
-                    Your farm application has been submitted and is now under review. We'll contact you within 5-7
+                    Your farm application has been submitted and is now under review. We&apos;ll contact you within 5-7
                     business days.
                   </p>
                 </div>

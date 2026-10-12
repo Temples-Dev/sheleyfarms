@@ -126,7 +126,7 @@ export default function HelpPage() {
                 <FileText className="mr-2 h-5 w-5" />
                 Contact Support
               </CardTitle>
-              <CardDescription>Can't find what you're looking for? Send us a message</CardDescription>
+              <CardDescription>Can&apos;t find what you&apos;re looking for? Send us a message</CardDescription>
             </CardHeader>
             <CardContent>
               <form className="space-y-4">

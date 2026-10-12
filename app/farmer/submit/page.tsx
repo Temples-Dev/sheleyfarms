@@ -667,7 +667,7 @@ export default function FarmSubmission() {
                     <li>Your application will be reviewed by our team within 5-7 business days</li>
                     <li>We may contact you for additional information or clarification</li>
                     <li>Once approved, your farm will be listed on our platform</li>
-                    <li>You'll receive access to investor inquiries and funding opportunities</li>
+                    <li>You&apos;ll receive access to investor inquiries and funding opportunities</li>
                   </ul>
                 </div>
               </div>

@@ -38,6 +38,7 @@ export function FarmerAuthProvider({ children }: { children: React.ReactNode }) 
     // Check for existing farmer session
     const storedFarmer = localStorage.getItem("farmer")
     if (storedFarmer) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage is client-only; the stored session must be read after mount
       setFarmer(JSON.parse(storedFarmer))
     }
     setIsLoading(false)

@@ -30,6 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const savedUser = localStorage.getItem("shelley-farms-user")
     if (savedUser) {
       try {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage is client-only; the stored session must be read after mount
         setUser(JSON.parse(savedUser))
       } catch (error) {
         localStorage.removeItem("shelley-farms-user")

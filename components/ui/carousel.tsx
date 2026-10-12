@@ -95,6 +95,7 @@ function Carousel({
 
   React.useEffect(() => {
     if (!api) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- the embla instance arrives post-mount; control state must sync on subscribe
     onSelect(api)
     api.on('reInit', onSelect)
     api.on('select', onSelect)

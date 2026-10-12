@@ -82,7 +82,7 @@ export default function AboutPage() {
               </p>
               <p className="text-xl leading-relaxed">
                 What started as a small initiative to connect local investors with family farms has grown into a
-                comprehensive platform serving thousands of investors and hundreds of farms across the country. We've
+                comprehensive platform serving thousands of investors and hundreds of farms across the country. We&apos;ve
                 facilitated over $50 million in agricultural investments, helping farms expand, modernize, and adopt
                 sustainable practices.
               </p>

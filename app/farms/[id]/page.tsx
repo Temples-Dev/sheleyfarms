@@ -11,6 +11,7 @@ import Link from "next/link"
 import { useParams } from "next/navigation"
 
 // Extended mock data for farm details
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- mock catalog fixture, typed on API integration
 const farmDetailsData: Record<string, any> = {
   "1": {
     id: 1,
@@ -338,14 +339,14 @@ export default function FarmDetailPage() {
                         <AccordionItem value="item-1">
                           <AccordionTrigger>How are returns calculated?</AccordionTrigger>
                           <AccordionContent>
-                            Returns are calculated based on the farm's net profit after operational expenses. Investors
+                            Returns are calculated based on the farm&apos;s net profit after operational expenses. Investors
                             receive a proportional share based on their investment amount.
                           </AccordionContent>
                         </AccordionItem>
                         <AccordionItem value="item-2">
                           <AccordionTrigger>When do I receive my returns?</AccordionTrigger>
                           <AccordionContent>
-                            {farm.payoutSchedule}. You'll receive detailed reports before each payout.
+                            {farm.payoutSchedule}. You&apos;ll receive detailed reports before each payout.
                           </AccordionContent>
                         </AccordionItem>
                         <AccordionItem value="item-3">

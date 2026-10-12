@@ -380,7 +380,7 @@ export default function HomePage() {
                     </Badge>
                   </div>
 
-                  <blockquote className="text-gray-700 leading-relaxed italic">"{testimonial.content}"</blockquote>
+                  <blockquote className="text-gray-700 leading-relaxed italic">&ldquo;{testimonial.content}&rdquo;</blockquote>
 
                   <div className="flex items-center space-x-4">
                     <img

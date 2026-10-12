@@ -243,7 +243,7 @@ export default function FarmerSettings() {
                     <div className="flex items-center justify-between">
                       <div>
                         <Label htmlFor="showFarmLocation">Show Farm Location</Label>
-                        <p className="text-sm text-gray-600">Display your farm's location on listings</p>
+                        <p className="text-sm text-gray-600">Display your farm&apos;s location on listings</p>
                       </div>
                       <Switch
                         id="showFarmLocation"

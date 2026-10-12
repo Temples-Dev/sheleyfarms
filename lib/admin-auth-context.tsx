@@ -28,6 +28,7 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     // Check for existing admin session
     const storedAdmin = localStorage.getItem("admin")
     if (storedAdmin) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage is client-only; the stored session must be read after mount
       setAdmin(JSON.parse(storedAdmin))
     }
     setIsLoading(false)
