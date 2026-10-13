@@ -25,7 +25,7 @@ docker compose up --build
 # api: http://localhost:8000/api/v1/health/
 ```
 
-Services: `web` (Next.js), `api` (Django), `worker` (Celery),
+Services: `web` (Vite), `api` (Django), `worker` (Celery),
 `db` (PostgreSQL 17), `redis` (broker).
 
 ### Frontend only
