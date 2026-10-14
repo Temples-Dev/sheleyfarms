@@ -1,101 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
-import { ArrowLeft, Filter, Search, TrendingUp } from "lucide-react"
+import { Filter, Search, TrendingUp } from "lucide-react"
 import { Link } from "react-router-dom"
-
-// Mock data for farms
-const farmsData = [
-  {
-    id: 1,
-    name: "Green Valley Poultry Farm",
-    image: "/placeholder.svg?height=300&width=400",
-    returnRate: "14%",
-    duration: "12 months",
-    status: "Open",
-    minInvestment: 500,
-    maxInvestment: 10000,
-    location: "Northern Region",
-    type: "Poultry",
-    description: "Modern poultry farm specializing in free-range chicken production with sustainable practices.",
-    fundingProgress: 65,
-  },
-  {
-    id: 2,
-    name: "Sunrise Vegetable Gardens",
-    image: "/placeholder.svg?height=300&width=400",
-    returnRate: "12%",
-    duration: "8 months",
-    status: "Open",
-    minInvestment: 300,
-    maxInvestment: 5000,
-    location: "Central Region",
-    type: "Vegetable",
-    description: "Organic vegetable farm growing tomatoes, peppers, and leafy greens for local markets.",
-    fundingProgress: 40,
-  },
-  {
-    id: 3,
-    name: "Blue Lake Fishery",
-    image: "/placeholder.svg?height=300&width=400",
-    returnRate: "16%",
-    duration: "18 months",
-    status: "Funded",
-    minInvestment: 1000,
-    maxInvestment: 20000,
-    location: "Coastal Region",
-    type: "Fishery",
-    description: "Sustainable tilapia and catfish farming operation with modern aquaculture techniques.",
-    fundingProgress: 100,
-  },
-  {
-    id: 4,
-    name: "Golden Grain Rice Farm",
-    image: "/placeholder.svg?height=300&width=400",
-    returnRate: "10%",
-    duration: "6 months",
-    status: "Open",
-    minInvestment: 200,
-    maxInvestment: 3000,
-    location: "Northern Region",
-    type: "Grain",
-    description: "Traditional rice farming with modern irrigation systems for consistent yields.",
-    fundingProgress: 25,
-  },
-  {
-    id: 5,
-    name: "Tropical Fruit Orchard",
-    image: "/placeholder.svg?height=300&width=400",
-    returnRate: "15%",
-    duration: "24 months",
-    status: "Open",
-    minInvestment: 800,
-    maxInvestment: 15000,
-    location: "Eastern Region",
-    type: "Fruit",
-    description: "Mango and citrus orchard with export potential to international markets.",
-    fundingProgress: 80,
-  },
-  {
-    id: 6,
-    name: "Highland Coffee Plantation",
-    image: "/placeholder.svg?height=300&width=400",
-    returnRate: "18%",
-    duration: "36 months",
-    status: "Closed",
-    minInvestment: 2000,
-    maxInvestment: 50000,
-    location: "Eastern Region",
-    type: "Coffee",
-    description: "Premium arabica coffee plantation with direct trade relationships.",
-    fundingProgress: 100,
-  },
-]
+import { fetchFarms, type UiFarm } from "@/lib/farms-api"
 
 export default function FarmsPage() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -103,9 +16,36 @@ export default function FarmsPage() {
   const [typeFilter, setTypeFilter] = useState("all")
   const [statusFilter, setStatusFilter] = useState("all")
   const [sortBy, setSortBy] = useState("returnRate")
+  const [farms, setFarms] = useState<UiFarm[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    fetchFarms()
+      .then((loaded) => {
+        if (!cancelled) {
+          setFarms(loaded)
+          setLoadError(null)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setLoadError("Could not load farms. Please try again later.")
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsLoading(false)
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   // Filter and sort farms
-  const filteredFarms = farmsData
+  const filteredFarms = farms
     .filter((farm) => {
       const matchesSearch = farm.name.toLowerCase().includes(searchTerm.toLowerCase())
       const matchesLocation = locationFilter === "all" || farm.location === locationFilter
@@ -240,7 +180,9 @@ export default function FarmsPage() {
           </div>
 
           <div className="mt-6 text-gray-600">
-            Showing {filteredFarms.length} of {farmsData.length} farms
+            {isLoading
+              ? "Loading farms..."
+              : `Showing ${filteredFarms.length} of ${farms.length} farms`}
           </div>
         </div>
       </section>
@@ -248,7 +190,22 @@ export default function FarmsPage() {
       {/* Farms Grid */}
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
-          {filteredFarms.length === 0 ? (
+          {isLoading ? (
+            <div className="text-center py-16">
+              <p className="text-xl text-gray-600">Loading farms...</p>
+            </div>
+          ) : loadError !== null ? (
+            <div className="text-center py-16">
+              <p className="text-xl text-gray-600 mb-6">{loadError}</p>
+              <Button
+                onClick={() => window.location.reload()}
+                variant="outline"
+                className="border-orange-500 text-orange-600 hover:bg-orange-50 bg-transparent"
+              >
+                Retry
+              </Button>
+            </div>
+          ) : filteredFarms.length === 0 ? (
             <div className="text-center py-16">
               <p className="text-xl text-gray-600 mb-6">No farms match your current filters.</p>
               <Button

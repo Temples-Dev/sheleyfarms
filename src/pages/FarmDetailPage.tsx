@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -8,133 +8,68 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { ArrowLeft, MapPin, Calendar, DollarSign, TrendingUp, Users, Shield } from "lucide-react"
 import { Link, useParams } from "react-router-dom"
+import { ApiError } from "@/lib/api-client"
+import { fetchFarm, type UiFarmDetail } from "@/lib/farms-api"
 
-// Extended mock data for farm details
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- mock catalog fixture, typed on API integration
-const farmDetailsData: Record<string, any> = {
-  "1": {
-    id: 1,
-    name: "Green Valley Poultry Farm",
-    bannerImage: "/placeholder.svg?height=400&width=800",
-    gallery: [
-      "/placeholder.svg?height=300&width=400",
-      "/placeholder.svg?height=300&width=400",
-      "/placeholder.svg?height=300&width=400",
-      "/placeholder.svg?height=300&width=400",
-    ],
-    returnRate: "14%",
-    duration: "12 months",
-    status: "Open",
-    minInvestment: 500,
-    maxInvestment: 10000,
-    location: "Northern Region, Ghana",
-    type: "Poultry",
-    size: "25 acres",
-    description:
-      "Green Valley Poultry Farm is a state-of-the-art facility specializing in free-range chicken production. Our sustainable farming practices ensure high-quality poultry products while maintaining environmental responsibility.",
-    detailedDescription:
-      "Located in the fertile Northern Region of Ghana, Green Valley Poultry Farm spans 25 acres of lush farmland. We maintain a flock of over 5,000 free-range chickens, producing both meat and eggs for local and regional markets. Our modern facilities include climate-controlled housing, automated feeding systems, and on-site processing capabilities.",
-    fundingProgress: 65,
-    totalFundingGoal: 50000,
-    currentFunding: 32500,
-    investorCount: 23,
-    farmActivities: [
-      "Free-range chicken rearing",
-      "Egg production and collection",
-      "Feed production and storage",
-      "Processing and packaging",
-      "Local market distribution",
-    ],
-    keyFeatures: [
-      "Certified organic practices",
-      "Modern climate-controlled facilities",
-      "Automated feeding systems",
-      "On-site veterinary care",
-      "Direct market access",
-    ],
-    riskFactors: [
-      "Weather-dependent operations",
-      "Market price fluctuations",
-      "Disease management",
-      "Feed cost variations",
-    ],
-    expectedReturns: {
-      "6 months": "7%",
-      "12 months": "14%",
-      "18 months": "21%",
-    },
-    payoutSchedule: "Quarterly dividends with principal return at maturity",
-    farmManager: {
-      name: "Kwame Osei",
-      experience: "15 years in poultry farming",
-      credentials: "Agricultural Science Degree, Certified Organic Farmer",
-    },
-  },
-  "2": {
-    id: 2,
-    name: "Sunrise Vegetable Gardens",
-    bannerImage: "/placeholder.svg?height=400&width=800",
-    gallery: [
-      "/placeholder.svg?height=300&width=400",
-      "/placeholder.svg?height=300&width=400",
-      "/placeholder.svg?height=300&width=400",
-      "/placeholder.svg?height=300&width=400",
-    ],
-    returnRate: "12%",
-    duration: "8 months",
-    status: "Open",
-    minInvestment: 300,
-    maxInvestment: 5000,
-    location: "Central Region, Ghana",
-    type: "Vegetable",
-    size: "15 acres",
-    description:
-      "Sunrise Vegetable Gardens focuses on organic vegetable production, growing premium tomatoes, peppers, and leafy greens for local markets using sustainable farming methods.",
-    detailedDescription:
-      "Our 15-acre organic vegetable farm in the Central Region utilizes advanced irrigation systems and greenhouse technology to ensure year-round production. We specialize in high-value crops including tomatoes, bell peppers, lettuce, and spinach, supplying restaurants and supermarkets across the region.",
-    fundingProgress: 40,
-    totalFundingGoal: 30000,
-    currentFunding: 12000,
-    investorCount: 15,
-    farmActivities: [
-      "Organic vegetable cultivation",
-      "Greenhouse management",
-      "Irrigation system operation",
-      "Harvesting and packaging",
-      "Market distribution",
-    ],
-    keyFeatures: [
-      "Organic certification",
-      "Drip irrigation system",
-      "Greenhouse facilities",
-      "Soil health management",
-      "Premium market contracts",
-    ],
-    riskFactors: [
-      "Seasonal demand variations",
-      "Pest and disease management",
-      "Water availability",
-      "Market competition",
-    ],
-    expectedReturns: {
-      "4 months": "6%",
-      "8 months": "12%",
-      "12 months": "18%",
-    },
-    payoutSchedule: "Bi-annual dividends with principal return at harvest",
-    farmManager: {
-      name: "Ama Asante",
-      experience: "12 years in organic farming",
-      credentials: "Horticulture Degree, Organic Certification",
-    },
-  },
-}
 
 export default function FarmDetailPage() {
   const params = useParams()
   const farmId = params.id as string
-  const farm = farmDetailsData[farmId]
+  const [farm, setFarm] = useState<UiFarmDetail | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [selectedImage, setSelectedImage] = useState(0)
+
+  useEffect(() => {
+    let cancelled = false
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- refetch reset on farm change; guarded by cancellation flag
+    setIsLoading(true)
+    setLoadError(null)
+    fetchFarm(farmId)
+      .then((loaded) => {
+        if (!cancelled) {
+          setFarm(loaded)
+        }
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) {
+          if (error instanceof ApiError && error.status === 404) {
+            setFarm(null)
+          } else {
+            setLoadError("Could not load this farm. Please try again later.")
+          }
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsLoading(false)
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [farmId])
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-xl text-gray-600">Loading farm...</p>
+      </div>
+    )
+  }
+
+  if (loadError !== null) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-xl text-gray-600 mb-6">{loadError}</p>
+          <Link to="/farms">
+            <Button className="gradient-orange text-white shadow-lg">Back to Farms</Button>
+          </Link>
+        </div>
+      </div>
+    )
+  }
 
   if (!farm) {
     return (
