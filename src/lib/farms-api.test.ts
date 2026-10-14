@@ -78,7 +78,7 @@ describe("farms-api", () => {
     const farms = await fetchFarms({ search: "valley", status: "open" });
 
     expect(farms).toHaveLength(1);
-    const [url] = fetchMock.mock.calls[0] as [string];
+    const [url] = fetchMock.mock.calls[0] as unknown as [string];
     expect(url).toContain("/farms/?");
     expect(url).toContain("page_size=100");
     expect(url).toContain("search=valley");

@@ -79,7 +79,7 @@ describe("investments-api", () => {
     const investments = await fetchMyInvestments();
 
     expect(investments).toHaveLength(1);
-    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
     expect(init.headers).toMatchObject({ Authorization: "Token tok123" });
   });
 });

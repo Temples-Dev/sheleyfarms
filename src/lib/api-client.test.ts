@@ -47,7 +47,7 @@ describe("api-client", () => {
 
     expect(body).toEqual({ ok: true });
     expect(fetchMock).toHaveBeenCalledOnce();
-    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe("http://localhost:8000/api/v1/farms/");
     expect(init.method).toBe("POST");
     expect(init.headers).toMatchObject({
@@ -63,7 +63,7 @@ describe("api-client", () => {
 
     await apiFetch("/farms/");
 
-    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
     expect(init.headers).not.toHaveProperty("Authorization");
   });
 
