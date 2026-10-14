@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -10,6 +10,7 @@ import { TrendingUp, DollarSign, Calendar, MapPin, Download, Eye, MoreHorizontal
 import DashboardLayout from "@/components/dashboard-layout"
 import ProtectedRoute from "@/components/protected-route"
 import { Link } from "react-router-dom"
+import { fetchMyInvestments, type UiInvestment } from "@/lib/investments-api"
 
 // Mock user data
 const userData = {
@@ -23,99 +24,39 @@ const userData = {
   completedInvestments: 2,
 }
 
-// Mock investment data
-const investmentsData = [
-  {
-    id: 1,
-    farmName: "Green Valley Poultry Farm",
-    farmImage: "/placeholder.svg?height=100&width=100",
-    investmentDate: "2024-01-15",
-    amount: 2000,
-    expectedReturn: "14%",
-    currentValue: 2180,
-    status: "Ongoing",
-    duration: "12 months",
-    progress: 65,
-    nextPayout: "2024-04-15",
-    location: "Northern Region",
-  },
-  {
-    id: 2,
-    farmName: "Sunrise Vegetable Gardens",
-    farmImage: "/placeholder.svg?height=100&width=100",
-    investmentDate: "2024-02-01",
-    amount: 1500,
-    expectedReturn: "12%",
-    currentValue: 1590,
-    status: "Ongoing",
-    duration: "8 months",
-    progress: 40,
-    nextPayout: "2024-06-01",
-    location: "Central Region",
-  },
-  {
-    id: 3,
-    farmName: "Blue Lake Fishery",
-    farmImage: "/placeholder.svg?height=100&width=100",
-    investmentDate: "2024-03-10",
-    amount: 3000,
-    expectedReturn: "16%",
-    currentValue: 3240,
-    status: "Ongoing",
-    duration: "18 months",
-    progress: 25,
-    nextPayout: "2024-09-10",
-    location: "Coastal Region",
-  },
-  {
-    id: 4,
-    farmName: "Golden Grain Rice Farm",
-    farmImage: "/placeholder.svg?height=100&width=100",
-    investmentDate: "2023-12-01",
-    amount: 1000,
-    expectedReturn: "10%",
-    currentValue: 1100,
-    status: "Completed",
-    duration: "6 months",
-    progress: 100,
-    completedDate: "2024-06-01",
-    location: "Northern Region",
-  },
-  {
-    id: 5,
-    farmName: "Tropical Fruit Orchard",
-    farmImage: "/placeholder.svg?height=100&width=100",
-    investmentDate: "2024-01-20",
-    amount: 2000,
-    expectedReturn: "15%",
-    currentValue: 2150,
-    status: "Ongoing",
-    duration: "24 months",
-    progress: 15,
-    nextPayout: "2024-07-20",
-    location: "Eastern Region",
-  },
-  {
-    id: 6,
-    farmName: "Highland Coffee Plantation",
-    farmImage: "/placeholder.svg?height=100&width=100",
-    investmentDate: "2023-10-15",
-    amount: 1500,
-    expectedReturn: "18%",
-    currentValue: 1770,
-    status: "Completed",
-    duration: "12 months",
-    progress: 100,
-    completedDate: "2024-10-15",
-    location: "Eastern Region",
-  },
-]
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState("overview")
+  const [investments, setInvestments] = useState<UiInvestment[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
-  const ongoingInvestments = investmentsData.filter((inv) => inv.status === "Ongoing")
-  const completedInvestments = investmentsData.filter((inv) => inv.status === "Completed")
+  useEffect(() => {
+    let cancelled = false
+    fetchMyInvestments()
+      .then((loaded) => {
+        if (!cancelled) {
+          setInvestments(loaded)
+          setLoadError(null)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setLoadError("Could not load investments.")
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsLoading(false)
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const ongoingInvestments = investments.filter((inv) => inv.status === "Active")
+  const completedInvestments = investments.filter((inv) => inv.status === "Completed")
 
   return (
     <ProtectedRoute>
@@ -259,7 +200,14 @@ export default function DashboardPage() {
 
             <TabsContent value="active" className="mt-6">
               <div className="space-y-4">
-                {ongoingInvestments.map((investment) => (
+                {isLoading ? (
+                  <p className="text-gray-500">Loading investments...</p>
+                ) : loadError !== null ? (
+                  <p className="text-gray-500">{loadError}</p>
+                ) : ongoingInvestments.length === 0 ? (
+                  <p className="text-gray-500">No active investments.</p>
+                ) : (
+                  ongoingInvestments.map((investment) => (
                   <Card key={investment.id}>
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between">
@@ -283,7 +231,7 @@ export default function DashboardPage() {
                         </div>
                         <div className="text-right">
                           <p className="text-sm text-gray-600">Expected Return</p>
-                          <p className="font-semibold text-green-600">{investment.expectedReturn}%</p>
+                          <p className="font-semibold text-green-600">{investment.expectedReturn}</p>
                         </div>
                         <div className="text-right">
                           <p className="text-sm text-gray-600">Duration</p>
@@ -312,13 +260,21 @@ export default function DashboardPage() {
                       </div>
                     </CardContent>
                   </Card>
-                ))}
+                  ))
+                )}
               </div>
             </TabsContent>
 
             <TabsContent value="completed" className="mt-6">
               <div className="space-y-4">
-                {completedInvestments.map((investment) => (
+                {isLoading ? (
+                  <p className="text-gray-500">Loading investments...</p>
+                ) : loadError !== null ? (
+                  <p className="text-gray-500">{loadError}</p>
+                ) : completedInvestments.length === 0 ? (
+                  <p className="text-gray-500">No completed investments.</p>
+                ) : (
+                  completedInvestments.map((investment) => (
                   <Card key={investment.id}>
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between">
@@ -371,7 +327,8 @@ export default function DashboardPage() {
                       </div>
                     </CardContent>
                   </Card>
-                ))}
+                  ))
+                )}
               </div>
             </TabsContent>
           </Tabs>

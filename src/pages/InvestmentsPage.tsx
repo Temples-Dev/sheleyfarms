@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -9,57 +9,39 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, Filter, MapPin, Calendar } from "lucide-react"
 import DashboardLayout from "@/components/dashboard-layout"
 import ProtectedRoute from "@/components/protected-route"
+import { fetchMyInvestments, type UiInvestment } from "@/lib/investments-api"
 
-// Mock investment data
-const investments = [
-  {
-    id: 1,
-    farmName: "Green Valley Poultry Farm",
-    farmImage: "/placeholder.svg?height=100&width=100",
-    investmentDate: "2024-01-15",
-    amount: 2000,
-    expectedReturn: "14%",
-    currentValue: 2180,
-    status: "Active",
-    duration: "12 months",
-    progress: 65,
-    location: "Northern Region",
-    farmType: "Poultry",
-  },
-  {
-    id: 2,
-    farmName: "Sunrise Vegetable Gardens",
-    farmImage: "/placeholder.svg?height=100&width=100",
-    investmentDate: "2024-02-01",
-    amount: 1500,
-    expectedReturn: "12%",
-    currentValue: 1590,
-    status: "Active",
-    duration: "8 months",
-    progress: 40,
-    location: "Central Region",
-    farmType: "Vegetables",
-  },
-  {
-    id: 3,
-    farmName: "Golden Grain Rice Farm",
-    farmImage: "/placeholder.svg?height=100&width=100",
-    investmentDate: "2023-12-01",
-    amount: 1000,
-    expectedReturn: "10%",
-    currentValue: 1100,
-    status: "Completed",
-    duration: "6 months",
-    progress: 100,
-    location: "Northern Region",
-    farmType: "Grains",
-  },
-]
 
 export default function InvestmentsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
-  const [activeTab, setActiveTab] = useState("all")
+  const [investments, setInvestments] = useState<UiInvestment[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    fetchMyInvestments()
+      .then((loaded) => {
+        if (!cancelled) {
+          setInvestments(loaded)
+          setLoadError(null)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setLoadError("Could not load investments. Please try again later.")
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsLoading(false)
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const filteredInvestments = investments.filter((investment) => {
     const matchesSearch = investment.farmName.toLowerCase().includes(searchTerm.toLowerCase())
@@ -105,7 +87,14 @@ export default function InvestmentsPage() {
 
           {/* Investment Cards */}
           <div className="grid gap-6">
-            {filteredInvestments.map((investment) => (
+            {isLoading ? (
+              <p className="text-gray-600">Loading investments...</p>
+            ) : loadError !== null ? (
+              <p className="text-gray-600">{loadError}</p>
+            ) : filteredInvestments.length === 0 ? (
+              <p className="text-gray-600">No investments yet. Browse farms to make your first investment.</p>
+            ) : (
+              filteredInvestments.map((investment) => (
               <Card key={investment.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
@@ -167,7 +156,8 @@ export default function InvestmentsPage() {
                   </div>
                 </CardContent>
               </Card>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </DashboardLayout>
