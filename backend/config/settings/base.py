@@ -18,6 +18,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
+    "rest_framework.authtoken",
+    "apps.accounts",
     "apps.farms",
     "apps.investments",
 ]
@@ -74,6 +76,12 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
+    # Session first: anonymous requests fail closed with 403 permission_denied,
+    # matching the house convention. Token auth still applies when presented.
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+        "rest_framework.authentication.TokenAuthentication",
+    ],
     "EXCEPTION_HANDLER": "common.exceptions.api_exception_handler",
     "DEFAULT_PAGINATION_CLASS": "common.pagination.StandardResultsPagination",
     "PAGE_SIZE": 25,

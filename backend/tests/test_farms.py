@@ -3,18 +3,30 @@
 import pytest
 from django.contrib.auth.models import User
 
+from apps.accounts.models import UserProfile
 from apps.farms.models import Farm
 
 
 @pytest.fixture
 def user(db):
-    return User.objects.create_user(username="staff", password="x", is_active=True)
+    user = User.objects.create_user(username="farmer", password="x", is_active=True)
+    user.profile.role = UserProfile.FARMER
+    user.profile.save()
+    return user
 
 
 @pytest.fixture
 def authed_client(api_client, user):
     api_client.force_authenticate(user=user)
     return api_client
+
+
+def test_patron_cannot_create_farm(api_client, db):
+    patron = User.objects.create_user(username="patron", password="x", is_active=True)
+    api_client.force_authenticate(user=patron)
+    response = api_client.post("/api/v1/farms/", farm_payload(), format="json")
+    assert response.status_code == 403
+    assert response.data["error"]["code"] == "permission_denied"
 
 
 def farm_payload(**overrides):
