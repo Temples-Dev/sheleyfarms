@@ -3,11 +3,12 @@
 import { createContext, useContext, useEffect, useState } from "react"
 import type { ReactNode } from "react"
 
+import { apiFetch, clearStoredToken, storeToken } from "./api-client"
+
 interface User {
   id: string
   name: string
   email: string
-  avatar?: string
 }
 
 interface AuthContextType {
@@ -19,6 +20,34 @@ interface AuthContextType {
   isAuthenticated: boolean
 }
 
+interface StoredSession {
+  token: string
+  user: User
+}
+
+interface AuthResponse {
+  token: string
+  user: { id: number; name: string; email: string }
+}
+
+const STORAGE_KEY = "shelley-farms-user"
+
+function toUser(response: AuthResponse["user"]): User {
+  return { id: String(response.id), name: response.name, email: response.email }
+}
+
+function readSession(): StoredSession | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return null
+    const session = JSON.parse(raw) as Partial<StoredSession>
+    if (!session.token || !session.user) return null
+    return session as StoredSession
+  } catch {
+    return null
+  }
+}
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -26,42 +55,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Check for existing auth on mount
-    const savedUser = localStorage.getItem("shelley-farms-user")
-    if (savedUser) {
-      try {
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage is client-only; the stored session must be read after mount
-        setUser(JSON.parse(savedUser))
-      } catch (error) {
-        localStorage.removeItem("shelley-farms-user")
-      }
+    const session = readSession()
+    if (session) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage is client-only; the stored session must be read after mount
+      setUser(session.user)
+      storeToken(session.token)
     }
     setIsLoading(false)
   }, [])
 
   const signIn = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true)
-
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-
-    // Mock authentication - in real app, this would call your auth API
-    if (email && password) {
-      const mockUser: User = {
-        id: "1",
-        name: email.split("@")[0].charAt(0).toUpperCase() + email.split("@")[0].slice(1),
-        email: email,
-        avatar: "/placeholder.svg?height=32&width=32",
-      }
-
-      setUser(mockUser)
-      localStorage.setItem("shelley-farms-user", JSON.stringify(mockUser))
-      setIsLoading(false)
+    try {
+      const response = await apiFetch<AuthResponse>("/auth/token/", {
+        method: "POST",
+        body: { email, password },
+        token: null,
+      })
+      const nextUser = toUser(response.user)
+      setUser(nextUser)
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ token: response.token, user: nextUser }))
+      storeToken(response.token)
       return true
+    } catch {
+      return false
+    } finally {
+      setIsLoading(false)
     }
-
-    setIsLoading(false)
-    return false
   }
 
   const signUp = async (userData: {
@@ -71,27 +91,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     password: string
   }): Promise<boolean> => {
     setIsLoading(true)
-
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-
-    // Mock user creation
-    const mockUser: User = {
-      id: "1",
-      name: `${userData.firstName} ${userData.lastName}`,
-      email: userData.email,
-      avatar: "/placeholder.svg?height=32&width=32",
+    try {
+      const response = await apiFetch<AuthResponse>("/auth/register/", {
+        method: "POST",
+        body: userData,
+        token: null,
+      })
+      const nextUser = toUser(response.user)
+      setUser(nextUser)
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ token: response.token, user: nextUser }))
+      storeToken(response.token)
+      return true
+    } catch {
+      return false
+    } finally {
+      setIsLoading(false)
     }
-
-    setUser(mockUser)
-    localStorage.setItem("shelley-farms-user", JSON.stringify(mockUser))
-    setIsLoading(false)
-    return true
   }
 
   const signOut = () => {
+    apiFetch("/auth/logout/", { method: "POST" }).catch(() => {
+      // Best effort: local session clears regardless.
+    })
     setUser(null)
-    localStorage.removeItem("shelley-farms-user")
+    localStorage.removeItem(STORAGE_KEY)
+    clearStoredToken()
   }
 
   const value: AuthContextType = {
