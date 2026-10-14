@@ -21,12 +21,14 @@ Marketing and platform website for SheleyFarms, an agricultural investment platf
 ```bash
 cp .env.example .env
 docker compose up --build
-# web: http://localhost:3000/
 # api: http://localhost:8000/api/v1/health/
 ```
 
-Services: `web` (Vite), `api` (Django), `worker` (Celery),
+Services: `api` (Django), `worker` (Celery),
 `db` (PostgreSQL 17), `redis` (broker).
+
+The frontend is not dockerized; run it locally (see Frontend only below),
+pointed at the API with `VITE_API_URL=http://localhost:8000/api/v1`.
 
 ### Frontend only
 
